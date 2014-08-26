@@ -22,20 +22,25 @@ import org.springframework.web.portlet.bind.annotation.RenderMapping;
 public class ViewController {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ViewController.class);
-	
+
 	/**
 	 * Simply selects the home view to render by returning its name.
 	 */
 	@RenderMapping
 	public String home(Locale locale, Model model) {
+                System.out.println("HEllo World");
 		logger.info("Welcome home! the client locale is "+ locale.toString());
-		this.sendNotification();
-		Date date = new Date();
+		
+                logger.warn("You are located into home page !");
+                
+                logger.error("You are located into home page !");
+                
+                Date date = new Date();
 		DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
 		
 		String formattedDate = dateFormat.format(date);
-		
-		model.addAttribute("serverTime", formattedDate);
+                
+                model.addAttribute("serverTime", formattedDate);
 		
 		return "home";
 	}
