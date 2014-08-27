@@ -11,11 +11,7 @@
 <portlet:actionURL name="notificationSubmit" var="formSubmitAction"/>
 
 
-<c:if test="${not empty submit}">
-    <h1>ON A BIEN ENVOYER LE FORMULAIRE
-</c:if>
-
-<form:form action="${formSubmitAction}" method="post" class="form-horizontal" >
+<form:form method="post" action="${formSubmitAction}" class="form-horizontal" >
     <fieldset>
         <!-- Form Name -->
         <legend>Esup Push Notification Portlet</legend>
@@ -24,7 +20,7 @@
         <div class="form-group">
             <form:label class="col-md-4 control-label" path="recipient" for="recipient">Recipient</form:label>  
             <div class="col-md-4">
-                <form:input path="recipient" name="recipient" placeholder="mbelmokh" class="form-control input-md" required=""/>
+                <form:input path="recipient" name="recipient" placeholder="mbelmokh" class="form-control input-md" required="requis"/>
             </div>
         </div>
         
@@ -33,15 +29,27 @@
         <div class="form-group">
             <form:label class="col-md-4 control-label" path="message" for="messageInput">Message</form:label>
             <div class="col-md-4">
-                <form:textarea path="message" name="message" placeholder="Hello world !" class="form-control"/></div>
+                <form:textarea path="message" name="message" placeholder="Hello world !" class="form-control" required="requis"/></div>
         </div>
         
-        <!-- Button -->
-        
+        <!-- Button (Double) -->
         <div class="form-group">
             <div class="col-md-4">
-                <input type="submit" value="Register" class="btn btn-primary" value="Send">
+                <button id="button1id" name="button1id" class="btn btn-primary">Send <span class="glyphicon glyphicon-send"></span></button>
+                <button id="button2id" name="button2id" type="reset" class="btn btn-primary">Reset <span class="glyphicon glyphicon-trash"></span></button>
             </div>
         </div>
     </fieldset>
 </form:form>
+    
+    
+<c:if test="${not empty submit}">
+    
+    <div class="alert alert-success alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert">
+            <span aria-hidden="true">&times;</span>
+            <span class="sr-only">Close</span>
+        </button>
+        Notification has been send successfully !
+    </div>
+</c:if>

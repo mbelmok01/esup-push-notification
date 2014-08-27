@@ -16,6 +16,8 @@ public class NotificationForm {
     private String recipient;
     private String message;
     
+//    private ArrayList<String> recipients = new ArrayList<String>();
+    
     public String getRecipient() {
         return this.recipient;
     }
@@ -31,4 +33,12 @@ public class NotificationForm {
     public void setMessage(String message) {
         this.message = message;
     }
+    
+//    public ArrayList<String> getRecipients() {
+//        return this.recipients;
+//    }
+//    
+//    public void setRecipients(ArrayList<String> recipients) {
+//        this.recipients = recipients;
+//    }
 }

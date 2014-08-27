@@ -45,16 +45,5 @@ public class ViewController {
 		return "home";
 	}
         
-        public void sendNotification() {
-            
-            JavaSender defaultJavaSender = new SenderClient.Builder("http://localhost:8081/ag-push").build();
-            
-            UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
-                    .pushApplicationId("083bfef0-b0c3-4018-a127-bf0aacfcf1a6")
-                    .masterSecret("a14e1770-eed8-455d-9043-3f61cf6ce3a0")
-                    .alert("Hello from Java Sender API!")
-                    .build();
-            
-            defaultJavaSender.send(unifiedMessage);
-        }
+        
 }

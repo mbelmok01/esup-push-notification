@@ -13,11 +13,17 @@
 <!--<p>The time on the server is ${serverTime}.</p>-->
 <br>
 <portlet:renderURL var="editLink" portletMode="edit"/>
-<a href="${editLink}">Aller vers la page edit</a> 
-
-
 <portlet:renderURL var="notifFormLink">
         <portlet:param name="action" value="notificationForm"/>
 </portlet:renderURL>
 
-<a href="${notifFormLink}">Aller au formulaire de notification</a>
+
+
+
+
+<a class="btn btn-default" href="${editLink}">
+    <i class="glyphicon glyphicon-cog"></i> Set parameters
+</a>
+<a class="btn btn-default" href="${notifFormLink}">
+    <i class="glyphicon glyphicon-edit"></i> Write notification
+</a>
