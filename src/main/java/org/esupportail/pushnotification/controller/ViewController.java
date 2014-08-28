@@ -1,12 +1,9 @@
 package org.esupportail.pushnotification.controller;
 
+import java.io.IOException;
 import java.text.DateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
-import org.jboss.aerogear.unifiedpush.JavaSender;
-import org.jboss.aerogear.unifiedpush.SenderClient;
-import org.jboss.aerogear.unifiedpush.message.UnifiedMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -23,18 +20,18 @@ public class ViewController {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ViewController.class);
 
-	/**
+        /**
 	 * Simply selects the home view to render by returning its name.
 	 */
 	@RenderMapping
-	public String home(Locale locale, Model model) {
+	public String home(Locale locale, Model model) throws IOException {
                 System.out.println("HEllo World");
 		logger.info("Welcome home! the client locale is "+ locale.toString());
 		
                 logger.warn("You are located into home page !");
                 
                 logger.error("You are located into home page !");
-                
+               
                 Date date = new Date();
 		DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
 		
@@ -43,7 +40,5 @@ public class ViewController {
                 model.addAttribute("serverTime", formattedDate);
 		
 		return "home";
-	}
-        
-        
+	}      
 }

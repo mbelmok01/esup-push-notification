@@ -15,6 +15,8 @@ import java.util.ArrayList;
 public class NotificationForm {
     private String recipient;
     private String message;
+    private String recipientType;
+
     
 //    private ArrayList<String> recipients = new ArrayList<String>();
     
@@ -33,6 +35,15 @@ public class NotificationForm {
     public void setMessage(String message) {
         this.message = message;
     }
+    
+    public String getRecipientType() {
+        return recipientType;
+    }
+
+    public void setRecipientType(String recipientType) {
+        this.recipientType = recipientType;
+    }
+    
     
 //    public ArrayList<String> getRecipients() {
 //        return this.recipients;

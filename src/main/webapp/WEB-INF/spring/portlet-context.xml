@@ -20,4 +20,8 @@
 		<property name="suffix" value=".jsp" />
 	</bean>
         
+        <bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="/WEB-INF/config.properties" />
+	</bean>
 </beans>

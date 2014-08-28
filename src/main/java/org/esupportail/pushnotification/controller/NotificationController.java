@@ -8,6 +8,7 @@ package org.esupportail.pushnotification.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.RenderRequest;
@@ -18,7 +19,7 @@ import org.jboss.aerogear.unifiedpush.message.MessageResponseCallback;
 import org.jboss.aerogear.unifiedpush.message.UnifiedMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -37,7 +38,18 @@ import org.springframework.web.portlet.bind.annotation.RenderMapping;
 public class NotificationController {
     
     private static final Logger logger = LoggerFactory.getLogger(ViewController.class);
-
+    
+    private JavaSender defaultJavaSender;
+    
+    @Value("${ups.url}") private String url;
+    @Value("${ups.applicationId}") private String applicationId;
+    @Value("${ups.masterSecret}") private String masterSecret;
+    
+    @PostConstruct
+    public void setVariables() {
+        this.defaultJavaSender = new SenderClient.Builder(this.url).build();
+    }
+    
     @RenderMapping(params = { "action=notificationForm" })
     public String notificationForm(RenderRequest req, Model model, @RequestParam ( value = "submit", required = false) String isSubmited) {
         
@@ -51,6 +63,7 @@ public class NotificationController {
     @ActionMapping("notificationSubmit")
     public void onNotificationFormSubmit(ActionRequest req, ActionResponse res, @ModelAttribute("notificationForm") NotificationForm notification, BindingResult results) {
         
+        logger.info("The recipient type is : " + notification.getRecipientType());
         logger.info("The message : " + notification.getMessage());
         logger.info("The recipient : " + notification.getRecipient());
         
@@ -67,11 +80,9 @@ public class NotificationController {
     
     public void sendNotification(String message, List<String> recipients) {
             
-            JavaSender defaultJavaSender = new SenderClient.Builder("http://localhost:8081/ag-push").build();
-            
-            UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
-                    .pushApplicationId("083bfef0-b0c3-4018-a127-bf0aacfcf1a6")
-                    .masterSecret("a14e1770-eed8-455d-9043-3f61cf6ce3a0")
+        UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
+                    .pushApplicationId(this.applicationId)
+                    .masterSecret(this.masterSecret)
                     .alert(message)
                     .aliases(recipients)
                     .build();

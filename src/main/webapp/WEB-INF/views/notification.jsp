@@ -16,6 +16,19 @@
         <!-- Form Name -->
         <legend>Esup Push Notification Portlet</legend>
         
+        <!-- Select Basic -->
+        <div class="form-group">
+            <form:label class="col-md-4 control-label" path="" for="selectbasic">Type of Recipient</form:label>
+            <div class="col-md-4">
+                <form:select path="recipientType" class="col-md-4 form-control">
+                    <option>Logins</option>
+                    <option>Groups</option>
+                    <option>Brodcast</option>
+                </form:select>
+            </div>
+        </div>
+        
+        
         <!-- Text input-->
         <div class="form-group">
             <form:label class="col-md-4 control-label" path="recipient" for="recipient">Recipient</form:label>  
@@ -41,11 +54,8 @@
         </div>
     </fieldset>
 </form:form>
-    <div class="btn-group">
-  <button type="button" class="btn btn-default">Left</button>
-  <button type="button" class="btn btn-default">Middle</button>
-  <button type="button" class="btn btn-default">Right</button>
-</div>
+    
+    
     
 <c:if test="${not empty submit}">
     

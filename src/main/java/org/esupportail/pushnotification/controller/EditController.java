@@ -48,47 +48,6 @@ public class EditController {
         
         res.setRenderParameter("action", "editForm");
     }
-    
-//    @ModelAttribute
-//    public void getPreferences(RenderRequest request, Model model) {
-//    	
-//        PortletPreferences prefs = request.getPreferences();
-//        try {
-//            model.addAttribute("serverURL", prefs.getValue("serverURL", null));
-//            model.addAttribute("applicationID", prefs.getValue("applicationID", null));
-//            model.addAttribute("masterSecret", Boolean.valueOf(prefs.getValue("masterSecret", null)));
-//        } catch(Exception e) {
-//            // If we can not fetch preferences
-//            logger.error("An error has been thrown when fetching preferences.");
-//        }
-//    }
-    
-//    @ActionMapping("deletePreferences)"
-//    public void deletePreferences(ActionRequest request, ActionResponse response) {
-//
-//        PortletPreferences prefs = request.getPreferences();
-//        try {
-//            prefs.setValue("", null);
-//            prefs.setValue("", null);
-//            prefs.store();
-//        } catch (Exception e) {}
-//
-//        response.setRenderParameter("isDeleted", "true");
-//    }
-        
-    
-//    @RenderMapping
-//    public ModelAndView showPreferencesView(RenderRequest request,
-//            RenderResponse response) throws Exception {
-//
-//        Map<String, Object> model = new HashMap<String, Object>();
-//
-//        PortletSession session = request.getPortletSession();
-//        String setName = request.getPreferences().getValue("newsSetName", "default");
-//        
-//        
-//        return new ModelAndView(viewName, "model", model);
-//    }
 }
 
 
