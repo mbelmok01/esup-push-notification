@@ -34,14 +34,18 @@
         
         <!-- Button (Double) -->
         <div class="form-group">
-            <div class="col-md-4">
+            <div class="col-md-12" style="text-align: center;">
                 <button id="button1id" name="button1id" class="btn btn-primary">Send <span class="glyphicon glyphicon-send"></span></button>
-                <button id="button2id" name="button2id" type="reset" class="btn btn-primary">Reset <span class="glyphicon glyphicon-trash"></span></button>
+                <button id="button2id" name="button2id" type="reset" class="btn btn-danger">Reset <span class="glyphicon glyphicon-trash"></span></button>
             </div>
         </div>
     </fieldset>
 </form:form>
-    
+    <div class="btn-group">
+  <button type="button" class="btn btn-default">Left</button>
+  <button type="button" class="btn btn-default">Middle</button>
+  <button type="button" class="btn btn-default">Right</button>
+</div>
     
 <c:if test="${not empty submit}">
     
