@@ -20,8 +20,25 @@
 		<property name="suffix" value=".jsp" />
 	</bean>
         
-        <bean id="propertyConfigurer"
+<!--        <bean id="propertyConfigurer"
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="location" value="/WEB-INF/config.properties" />
+	</bean>-->
+        
+        <bean id="propertyConfigurer" 
+	    class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+	  <property name="locations" > 
+	      <list>
+	      	<value>/WEB-INF/config.properties</value>
+	      </list>
+	  </property>
 	</bean>
+        
+        <!-- for spring annotation @Autowired -->
+        <context:annotation-config />
+
+	<import resource="cache/cache.xml" />
+        <import resource="i18n/i18n.xml" />
+	<import resource="ldap/ldap.xml" />
+	
 </beans>

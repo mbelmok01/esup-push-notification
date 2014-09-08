@@ -17,6 +17,9 @@
 		<org.springframework-version>3.1.1.RELEASE</org.springframework-version>
 		<org.aspectj-version>1.6.9</org.aspectj-version>
 		<org.slf4j-version>1.5.10</org.slf4j-version>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <esup-commons-version>[0.3.3, 0.3.99]</esup-commons-version>
+                <spring-version>3.2.3.RELEASE</spring-version>
 	</properties>
 	
         <repositories>
@@ -30,7 +33,17 @@
 			<id>jlehtinen.net</id>
 			<url>http://repo.jlehtinen.net/maven2/</url>
 		</repository>
-	</repositories>
+                <repository>
+                    <id>esup</id>
+                    <url>https://mvn.esup-portail.org/content/repositories/releases</url>
+                    <snapshots> 
+                        <enabled>false</enabled> 
+                    </snapshots>
+                    <releases> 
+                        <enabled>true</enabled> 
+                    </releases>
+                </repository>
+        </repositories>
 	<!-- Repositories for plugins -->
 	<pluginRepositories>
 		<!-- Central repository -->
@@ -50,7 +63,38 @@
                     <artifactId>unifiedpush-java-client</artifactId>
                     <version>1.0.0</version>
                 </dependency>
-		<!-- Spring -->
+                <dependency>
+                    <groupId>org.springframework.ldap</groupId>
+                    <artifactId>spring-ldap-core</artifactId>
+                    <version>2.0.2.RELEASE</version>
+                </dependency>
+                
+                <dependency>
+                    <groupId>org.esupportail</groupId>
+                    <artifactId>esup-commons2-ldap</artifactId>
+                    <version>${esup-commons-version}</version>
+                    <exclusions>
+                        <!-- only used by StringUtils.removeUtf8Accents. Too big to keep unused -->
+                        <exclusion>
+                            <groupId>com.ibm.icu</groupId>
+                            <artifactId>icu4j</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                
+                <dependency>
+		  <groupId>org.hibernate</groupId>
+		  <artifactId>hibernate-c3p0</artifactId>
+		  <version>3.3.2.GA</version>
+		</dependency>
+                <dependency>
+		  <groupId>commons-lang</groupId>
+		  <artifactId>commons-lang</artifactId>
+		  <version>[2.1, 2.99]</version>
+		</dependency>
+                
+                
+                <!-- Spring -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>

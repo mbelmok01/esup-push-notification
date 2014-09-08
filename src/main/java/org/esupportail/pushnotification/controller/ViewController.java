@@ -1,6 +1,5 @@
 package org.esupportail.pushnotification.controller;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -17,28 +16,29 @@ import org.springframework.web.portlet.bind.annotation.RenderMapping;
 @Controller
 @RequestMapping("VIEW")
 public class ViewController {
-	
-	private static final Logger logger = LoggerFactory.getLogger(ViewController.class);
+    
+    private static final Logger logger = LoggerFactory.getLogger(ViewController.class);
+    
+    /**
+     * Simply selects the home view to render by returning its name.
+     * @param locale
+     * @param model
+     * @return 
+     * @throws java.io.IOException
+     */
+    
+    @RenderMapping
+    public String home(Locale locale, Model model) {
+        System.out.println("HEllo World");
+        logger.info("Welcome home! the client locale is "+ locale.toString());
 
-        /**
-	 * Simply selects the home view to render by returning its name.
-	 */
-	@RenderMapping
-	public String home(Locale locale, Model model) throws IOException {
-                System.out.println("HEllo World");
-		logger.info("Welcome home! the client locale is "+ locale.toString());
-		
-                logger.warn("You are located into home page !");
-                
-                logger.error("You are located into home page !");
-               
-                Date date = new Date();
-		DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
-		
-		String formattedDate = dateFormat.format(date);
-                
-                model.addAttribute("serverTime", formattedDate);
-		
-		return "home";
-	}      
+        Date date = new Date();
+        DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
+
+        String formattedDate = dateFormat.format(date);
+
+        model.addAttribute("serverTime", formattedDate);
+
+        return "home";
+    }
 }

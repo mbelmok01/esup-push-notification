@@ -6,7 +6,8 @@
 <script type="text/javascript" src="${pageContext.servletContext.contextPath}/rs/jquery-2.1.1/jquery-2.1.1.min.js"></script>
 <link type="text/css" href=" ${pageContext.servletContext.contextPath}/rs/bootstrap-3.2.0/css/bootstrap.min.css" rel="stylesheet" />
 <script type="text/javascript" src="${pageContext.servletContext.contextPath}/rs/bootstrap-3.2.0/js/bootstrap.min.js"></script>
-
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 
 <portlet:actionURL name="notificationSubmit" var="formSubmitAction"/>
 
@@ -20,20 +21,20 @@
         <div class="form-group">
             <form:label class="col-md-4 control-label" path="" for="selectbasic">Type of Recipient</form:label>
             <div class="col-md-4">
-                <form:select path="recipientType" class="col-md-4 form-control">
+                <form:select path="recipientType" class="col-md-4 form-control" id="selectedType">
                     <option>Logins</option>
                     <option>Groups</option>
-                    <option>Brodcast</option>
+                    <option>Broadcast</option>
                 </form:select>
             </div>
         </div>
         
         
         <!-- Text input-->
-        <div class="form-group">
+        <div class="form-group" id="recipient">
             <form:label class="col-md-4 control-label" path="recipient" for="recipient">Recipient</form:label>  
             <div class="col-md-4">
-                <form:input path="recipient" name="recipient" placeholder="mbelmokh" class="form-control input-md" required="requis"/>
+                <form:input id="recipientinput" path="recipient" name="recipient" placeholder="mbelmokh" class="form-control input-md" required="requis"/>
             </div>
         </div>
         
@@ -54,8 +55,28 @@
         </div>
     </fieldset>
 </form:form>
+
+
+    <script>
+        
+    $("#selectedType").change(function() {
+        
+//        if($("#selectedType " ).val() == "Broadcast"){
+//        $('#recipient').addClass('hidden');
+//        $('#recipientinput').removeAttr('required');
+//        } else {
+//            $('#recipient').removeClass('hidden');
+//            $('#recipientinput').attr('required', 'requis');
+//            $('#recipientinput').val("toto");
+//            
+//        }
+    });
     
     
+    
+         
+        
+    </script>
     
 <c:if test="${not empty submit}">
     
@@ -67,3 +88,4 @@
         Notification has been send successfully !
     </div>
 </c:if>
+    
