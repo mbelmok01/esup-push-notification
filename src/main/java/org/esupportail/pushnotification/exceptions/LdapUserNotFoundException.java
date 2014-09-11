@@ -1,16 +1,11 @@
-package org.esupportail.smsu.exceptions.ldap;
+package org.esupportail.pushnotification.exceptions;
 
 /**
- * Used when an user is not found in the ldap.
- * @author PRQD8824
+ * 
+ * @author Mohamed
  *
  */
 public class LdapUserNotFoundException extends Exception {
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -4244684563927159925L;
 
 	/**
 	 * Default constructor.

@@ -1,18 +1,14 @@
-package org.esupportail.smsu.exceptions.ldap;
+package org.esupportail.pushnotification.exceptions;
 
 /**
  * 
- * @author PRQD8824
+ * @author Mohamed
  *
  */
 public class LdapGroupNotFoundException extends Exception {
 	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 3428620017629502506L;
-
-	/**
+	
+        /**
 	 * Default constructor.
 	 */
 	public LdapGroupNotFoundException() {
