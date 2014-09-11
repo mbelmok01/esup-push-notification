@@ -7,16 +7,19 @@
 package org.esupportail.pushnotification.controller;
 
 import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.PostConstruct;
+import javax.mail.MessagingException;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.RenderRequest;
-import org.esupportail.commons.exceptions.UserNotFoundException;
-import org.esupportail.commons.services.ldap.LdapException;
 import org.esupportail.commons.services.ldap.LdapUser;
 import org.esupportail.commons.services.ldap.LdapUserAndGroupService;
 import org.esupportail.pushnotification.form.NotificationForm;
+import org.esupportail.pushnotification.model.LdapGroupNotFoundException;
 import org.esupportail.pushnotification.model.LdapUserNotFoundException;
+import org.esupportail.pushnotification.service.Ldap;
+import org.esupportail.pushnotification.service.Mail;
 import org.jboss.aerogear.unifiedpush.JavaSender;
 import org.jboss.aerogear.unifiedpush.SenderClient;
 import org.jboss.aerogear.unifiedpush.message.MessageResponseCallback;
@@ -47,13 +50,26 @@ public class NotificationController {
     
     private JavaSender defaultJavaSender;
     @Autowired
-    private LdapUserAndGroupService ldapService;
-    private LdapUtils ldapUtils;
-    private boolean succes;
+    private Ldap ldap;
+    @Autowired
+    private Mail mail;
+//    @Autowired
+//    private LdapUserAndGroupService ldapService;
+//    private LdapUtils ldapUtils;
+
+    
+    private String mailAttribute = "mail";
     
     @Value("${push.rootServerURL}") private String url;
     @Value("${push.applicationId}") private String applicationId;
     @Value("${push.masterSecret}") private String masterSecret;
+    @Value("{smtp.user}") private String sender;
+    
+    @PostConstruct
+    public void initConnection() throws MessagingException {
+        
+        this.defaultJavaSender = new SenderClient.Builder(this.url).build();
+    }
     
     @RenderMapping(params = { "action=notificationForm" })
     public String notificationForm(RenderRequest req, Model model, @RequestParam ( value = "submit", required = false) String isSubmited) {
@@ -65,93 +81,102 @@ public class NotificationController {
     }
     
     @ActionMapping("notificationSubmit")
-    public void onNotificationFormSubmit(ActionRequest req, ActionResponse res, @ModelAttribute("notificationForm") NotificationForm notification, BindingResult results) throws LdapUserNotFoundException {
+    public void onNotificationFormSubmit(ActionRequest req, ActionResponse res, @ModelAttribute("notificationForm") NotificationForm notification, BindingResult results) throws LdapUserNotFoundException, LdapGroupNotFoundException, MessagingException {
         
         logger.info("The recipient type is : " + notification.getRecipientType());
         logger.info("The message : " + notification.getMessage());
         logger.info("The recipient : " + notification.getRecipient());
+        logger.info("Mail : " + notification.getMail());
         
-        if(notification.getRecipientType().equalsIgnoreCase("broadcast")){
-            this.broadcastNotification(notification);
+        
+        
+        switch(notification.getRecipientType()) {
+            case "Logins" :
+                System.out.print("choix du type de recipient => login \n");
+                this.sendNotificationToLogins(notification);
+            break;
+            case "Group" :
+                this.sendNotificationToGroups(notification);
+            break;
+            case "Broadcast" :
+                this.sendNotification(notification, null);
+            break;
         }
         
-        //this.sendNotification(notification);
-        //this.getLdapUserByUserUid(notification.getRecipient());
-        
-        this.testLdapConnection(notification.getRecipient());
+        if(notification.getMail().equalsIgnoreCase("true") ) {
+            System.out.print("Joindre la notification d'un courriel \n");
+            this.sendCourriel(notification);
+        }
+        //ldap.getLdapUserByUserUid(notification.getRecipient());
         
         res.setRenderParameter("action", "notificationForm");
         res.setRenderParameter("submit", "isSubmited");
     }
     
+    public void sendNotificationToLogins(NotificationForm notification) throws LdapUserNotFoundException {
+        
+        // retourne une liste List<LdapUser>
+        // this.getLdapUsersFromLogins(notification.getRecipient());
+        System.out.print("entree dans sendNotificationToLogins \n");
+        this.sendNotification(notification, this.recipientToArrayList(notification.getRecipient()));
+        
+    }
     
-    @PostConstruct
-    public void initConnection() {
+    public void sendNotificationToGroups(NotificationForm notification) throws LdapGroupNotFoundException, LdapUserNotFoundException {
+
+        // recuperer les utilisateurs d'un groupe
+        System.out.print("Entree dans sendNotificationToGroups \n");
+        List<LdapUser> ldapUsers = ldap.getLdapUsersByGroupId(notification.getRecipient());
+        
+        // recuperer le login de chaque utilisateur
+        List<String> logins = ldap.getLoginsFromLdapUsers(ldapUsers);
+        
+        // appeler send notification to logins
+        this.sendNotification(notification, logins);
+        
+    }
+    
+    
+    
+    public void sendNotification(NotificationForm notification, List<String> logins){
         
         this.defaultJavaSender = new SenderClient.Builder(this.url).build();
-    }
-    
-    
-    public void setLdapService(
-            final LdapUserAndGroupService ldapGroupService) {
-        this.ldapService = ldapGroupService;
-    }
-    
-    public void sendNotification(NotificationForm notification) {
         
         UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
                 .pushApplicationId(this.applicationId)
                 .masterSecret(this.masterSecret)
-                .alert(notification.getMessage())
-                .aliases(this.recipientToArrayList(notification.getRecipient()))
+                .alert("Hello from Java Sender API!")
                 .build();
         
-        MessageResponseCallback callback = new MessageResponseCallback() {
-            
+        defaultJavaSender.send(unifiedMessage, new MessageResponseCallback() {
+            @Override
             public void onComplete(int statusCode) {
-                //do good stuff
-                logger.info("Le code status : " + statusCode);
                 
+                //do cool stuff
+                System.out.print("It's work fine !!! \n");        
             }
-            
+
             @Override
             public void onError(Throwable throwable) {
                 //bring out the bad news
-                logger.info("Il y a eu une erreur dans login: "+ throwable);
+                System.out.print("It doesn't work !!! \n");
             }
-        };
-        
-        defaultJavaSender.send(unifiedMessage, callback);
+        });
         
     }
     
-    public void broadcastNotification(NotificationForm notification) {
+    public void sendCourriel(NotificationForm notification) throws LdapUserNotFoundException{
         
-        UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
-                .pushApplicationId(this.applicationId)
-                .masterSecret(this.masterSecret)
-                .alert(notification.getMessage())
-                .build();
+        List<LdapUser> ldapUsers = ldap.getLdapUsersFromLogins(notification.getRecipient());
         
-        MessageResponseCallback callback = new MessageResponseCallback() {
+        for(LdapUser ldapUser : ldapUsers){
             
-            public void onComplete(int statusCode) {
-                //do good stuff
-                logger.info("Le code status : " + statusCode);
-                
-            }
+            String msg = notification.getMessage();
+            String object = notification.getObject();
             
-            @Override
-            public void onError(Throwable throwable) {
-                //bring out the bad news
-                logger.info("Il y a eu une erreur dans broadcast : "+ throwable);
-            }
-        };
-        
-        defaultJavaSender.send(unifiedMessage, callback);
-        
+            mail.sendMail(this.sender, ldapUser.getAttribute(this.mailAttribute),object, msg);
+        }
     }
-    
     
     // from String to ArrayList
     public ArrayList<String> recipientToArrayList(String recipients) {
@@ -164,56 +189,4 @@ public class NotificationController {
         }
         return recipientsList;
     }
-    
-    // Display user's attributes
-    public void displayUser(LdapUser user){
-        System.out.print("user id : " + user.getId());
-        System.out.print("user attributes : " + user.getAttributeNames().toString());
-    }
-    
-    // test connection to ldap and try to make request
-    public void testLdapConnection(String recipients) throws LdapUserNotFoundException{
-                
-        // List of ldapUser object
-        ArrayList<LdapUser> listOfLdapUser = new ArrayList<LdapUser>();
-        
-        // list of user (string received by input)
-        ArrayList<String> listOfStringUser = recipientToArrayList(recipients);
-        
-        for(int i=0; i<listOfStringUser.size(); i++){
-            
-            System.out.print("Le login du user est : " + listOfStringUser.get(i) + "\n");
-            
-            LdapUser user = this.getLdapUserByUserUid(listOfStringUser.get(i));
-            
-            System.out.print("Utilisateur trouve : \n" );
-            System.out.print(user.toString() + "\n");
-            
-            listOfLdapUser.add(user);
-        }
-    }
-    
-    public LdapUser getLdapUserByUserUid(final String ldapUserUid) throws LdapUserNotFoundException, LdapException {
-        
-        System.out.print("Entree dans getLdapUserByUserUid \n ");
-        
-        System.out.print("Le login du user a chercher est : " + ldapUserUid + "\n ");
-        
-        LdapUser ldapUser = null;
-        try {
-            System.out.print("Entree dans le try \n ");
-            ldapUser = ldapService.getLdapUser(ldapUserUid);
-        } catch (UserNotFoundException e) {
-            System.out.print("Entree dans le catch \n ");
-            throwLdapUserNotFoundException(e, ldapUserUid);
-        }
-        
-        return ldapUser;
-    }
-    
-    private void throwLdapUserNotFoundException(UserNotFoundException e, final String ldapUserUid) throws LdapUserNotFoundException {
-		final String messageStr = "Impossible de trouver l'utilisateur ayant pour login : [" + ldapUserUid + "]";
-		logger.debug(messageStr, e);
-		throw new LdapUserNotFoundException(messageStr, e);
-	}
 }

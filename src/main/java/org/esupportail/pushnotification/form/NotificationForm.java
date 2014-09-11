@@ -6,8 +6,6 @@
 
 package org.esupportail.pushnotification.form;
 
-import java.util.ArrayList;
-
 /**
  *
  * @author mohamed
@@ -16,10 +14,9 @@ public class NotificationForm {
     private String recipient;
     private String message;
     private String recipientType;
+    private String mail;
+    private String object;
 
-    
-//    private ArrayList<String> recipients = new ArrayList<String>();
-    
     public String getRecipient() {
         return this.recipient;
     }
@@ -44,12 +41,19 @@ public class NotificationForm {
         this.recipientType = recipientType;
     }
     
+    public String getMail() {
+        return mail;
+    }
+
+    public void setCourriel(String courriel) {
+        this.mail = courriel;
+    }
     
-//    public ArrayList<String> getRecipients() {
-//        return this.recipients;
-//    }
-//    
-//    public void setRecipients(ArrayList<String> recipients) {
-//        this.recipients = recipients;
-//    }
+    public String getObject() {
+        return object;
+    }
+
+    public void setObject(String object) {
+        this.object = object;
+    }
 }

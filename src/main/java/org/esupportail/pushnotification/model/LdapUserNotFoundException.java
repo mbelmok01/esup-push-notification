@@ -14,11 +14,6 @@ package org.esupportail.pushnotification.model;
 public class LdapUserNotFoundException extends Exception {
 
 	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -4244684563927159925L;
-
-	/**
 	 * Default constructor.
 	 */
 	public LdapUserNotFoundException() {

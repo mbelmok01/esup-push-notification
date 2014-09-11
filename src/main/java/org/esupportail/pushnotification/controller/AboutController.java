@@ -18,8 +18,10 @@ import org.springframework.web.portlet.bind.annotation.RenderMapping;
 @Controller
 @RequestMapping("ABOUT")
 public class AboutController {
+    
     @RenderMapping
     public String about(Model model) {
+    
         model.addAttribute("foo", "bar");
         return "about";
     }

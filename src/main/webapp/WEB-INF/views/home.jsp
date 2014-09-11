@@ -1,11 +1,11 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="portlet" uri="http://java.sun.com/portlet_2_0"%>
-
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 
 <script type="text/javascript" src="${pageContext.servletContext.contextPath}/rs/jquery-2.1.1/jquery-2.1.1.min.js"></script>
 <link type="text/css" href=" ${pageContext.servletContext.contextPath}/rs/bootstrap-3.2.0/css/bootstrap.min.css" rel="stylesheet" />
 <script type="text/javascript" src="${pageContext.servletContext.contextPath}/rs/bootstrap-3.2.0/js/bootstrap.min.js"></script>
-
 
 <h1>Home page</h1>
 
@@ -22,8 +22,8 @@
 
 
 <a class="btn btn-default" href="${editLink}">
-    <i class="glyphicon glyphicon-cog"></i> Set parameters
+    <i class="glyphicon glyphicon-cog"></i> <spring:message code="home.parameters"/>
 </a>
 <a class="btn btn-default" href="${notifFormLink}">
-    <i class="glyphicon glyphicon-edit"></i> Write notification
+    <i class="glyphicon glyphicon-edit"></i> <spring:message code="home.writeNotification"/>
 </a>
