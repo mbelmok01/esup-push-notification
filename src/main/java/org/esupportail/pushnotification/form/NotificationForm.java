@@ -45,8 +45,8 @@ public class NotificationForm {
         return mail;
     }
 
-    public void setCourriel(String courriel) {
-        this.mail = courriel;
+    public void setMail(String mail) {
+        this.mail = mail;
     }
     
     public String getObject() {

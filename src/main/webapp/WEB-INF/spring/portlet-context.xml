@@ -38,6 +38,5 @@
     <bean id="Ldap" class="org.esupportail.pushnotification.service.Ldap"></bean>
     
     
-    <bean id="app_context"
-		class="org.esupportail.commons.context.ApplicationContextHolder" />
+    <bean id="app_context" class="org.esupportail.commons.context.ApplicationContextHolder" />
 </beans>

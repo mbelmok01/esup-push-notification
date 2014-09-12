@@ -34,7 +34,6 @@
                 <value>${ldap.displayNameAttribute}</value>
                 <value>${ldap.emailAttribute}</value>
                 <value>${ldap.pagerAttribute}</value>
-                <value>${ldap.termsOfUseAttribute}</value>
                 <value>${ldap.displayNameAttribute}</value>
                 <value>${ldap.firstNameAttribute}</value>
                 <value>${ldap.lastNameAttribute}</value>
@@ -70,9 +69,9 @@
     </bean>
 	
     <bean id="ldapGroupService"
-              class="org.esupportail.commons.services.ldap.SearchableLdapGroupServiceImpl"
-              parent="ldapGroupServiceProperties"
-              lazy-init="true">
+          class="org.esupportail.commons.services.ldap.SearchableLdapGroupServiceImpl"
+          parent="ldapGroupServiceProperties"
+          lazy-init="true">
         <property name="attributes">
             <list>
                 <value>${ldap.group.nameAttr}</value>

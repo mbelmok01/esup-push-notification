@@ -8,6 +8,7 @@ package org.esupportail.pushnotification.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.esupportail.commons.exceptions.GroupNotFoundException;
 import org.esupportail.commons.exceptions.UserNotFoundException;
 import org.esupportail.commons.services.ldap.LdapException;
 import org.esupportail.commons.services.ldap.LdapGroup;
@@ -33,9 +34,13 @@ public class Ldap {
     @Autowired
     private LdapUserAndGroupService ldapService;
     private LdapUtils ldapUtils;
+    @Autowired
     private LdapGroupService ldapGroupService;
+    @Autowired
     private LdapGroupService ldapGroupMembersService;
     private String searchAttribute;
+    private String userPagerAttribute;
+    
     
     private static final Logger logger = LoggerFactory.getLogger(Ldap.class);
     
@@ -84,42 +89,95 @@ public class Ldap {
     // return a LdapUser from a token. This function is not completed
     public List<LdapUser> getUserFromToken(String token) throws LdapUserNotFoundException{
         
-        System.out.print("Le patern est : " + token + "\n");
+        System.out.println("Le patern est : " + token);
         
         List<LdapUser> users = this.getLdapUsersFromToken(token);
         
-        System.out.print("Utilisateurs trouves : \n" );
+        System.out.println("Utilisateurs trouves : ");
         
         return users;
     }
     
     public List<LdapUser> getLdapUsersByGroupId(final String groupId) throws LdapGroupNotFoundException, LdapUserNotFoundException {
         
-        System.out.print("Entree dans getLdapUsersByGroupId \n");
+        System.out.println("###############################################################");
+        System.out.println("Entree dans getLdapUsersByGroupId");
+        System.out.println("Le group a chercher est : " + groupId);
         
-        System.out.print("Le group a chercher est " + groupId + " \n");
         
-        LdapGroup ldapGroup = ldapGroupService.getLdapGroup(groupId);
+        List<LdapGroup> groups = null;
         
-        System.out.print("Group trouve : \n ");
+        try{
+            
+            groups = ldapGroupService.getLdapGroupsFromToken(groupId);
         
-        System.out.print("Recuperation des membres du groupe \n");
+        } catch (GroupNotFoundException e){
+            
+            LdapGroupNotFoundException(e, groupId);
+        }
+        
+        System.out.println("Nombre de groupes correspondants : " + groups.size());
+        
+        for(LdapGroup group : groups){
+            
+            System.out.println("Groupe correspondant => " + group.getId());
+        }
+        System.out.println("###############################################################");
+        
+           
+        
+        
+        
+        
+        
+        System.out.println("***************************************************************");
+        
+        LdapGroup ldapGroup = ldapGroupService.getLdapGroup(groups.get(0).getId());
+        
+        System.out.println("Group [ " + ldapGroup.getId() + " ] trouve. \n Recuperation des membres du groupe...");
+        
         List<LdapUser> ldapUserList = ldapService.getMembers(ldapGroup);
+
+        System.out.println(" Nombre de membres trouve : " + ldapUserList.size());
+
         
-        System.out.print("Membres recuperes \n");
+        System.out.println("Liste des membres du groupe : " + ldapUserList.toString());
         
-        System.out.print("Listing des membres du groupe :  \n");
+        System.out.println("Listing des membres du groupe : ");
         
         for(LdapUser ldapUser : ldapUserList){
-            System.out.print("login : " + ldapUser.getId() + "\n");
+            System.out.println("login : " + ldapUser.getId());
         }
+        
+        System.out.println("***************************************************************");
         
         return ldapUserList;
     }
     
+    public List<LdapGroup> searchGroupsByName(final String token) {
+        System.out.println("Entree dans searchGroupsByName");
+        
+        List<LdapGroup> groups = ldapGroupService.getLdapGroupsFromToken(token);
+        
+        for (LdapGroup group : groups) {
+            System.out.println("nom du groupe : " + group.getId());
+            List<String> membres = this.getMemberIds(group.getId());
+            System.out.println("Liste des membres du groupe :");
+            for(String login : membres){
+                System.out.println("login => " + login);
+            }
+        }
+        
+        return ldapGroupService.getLdapGroupsFromToken(token);
+    }
+    
+    public List<String> getMemberIds(String groupId) {
+        return ldapService.getMemberIds(ldapGroupMembersService.getLdapGroup(groupId));
+    }
+    
     public List<String> getLoginsFromLdapUsers(List<LdapUser> ldapUsers){
         
-        List<String> logins = new ArrayList<>();
+        List<String> logins = null;
         
         for(LdapUser ldapUser : ldapUsers) {
             logins.add(ldapUser.getId());
@@ -135,8 +193,17 @@ public class Ldap {
         throw new LdapUserNotFoundException(messageStr, e);
     }
     
-    public List<LdapUser> getLdapUsersFromToken(final String token) {
+    private void LdapGroupNotFoundException(GroupNotFoundException e, String groupId) throws LdapGroupNotFoundException {
         
+        final String messageStr = "Impossible de trouver le ayant pour id : [" + groupId + "]";
+        logger.debug(messageStr, e);
+        throw new LdapGroupNotFoundException(messageStr, e);
+        
+    }
+    
+    public List<LdapUser> getLdapUsersFromToken(final String token) {
+        System.out.println("Entree dans getLdapUsersFromToken");
+        System.out.println("Le toekn est : " + token);
         final AndFilter filter = new AndFilter();
         andTokenFilter(filter, token);
         return searchWithFilter(filter);
@@ -179,4 +246,6 @@ public class Ldap {
         }
         return recipientsList;
     }
+    
+    
 }
