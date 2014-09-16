@@ -8,6 +8,10 @@ package org.esupportail.pushnotification.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.naming.NamingException;
+import javax.naming.directory.Attributes;
 import org.esupportail.commons.exceptions.GroupNotFoundException;
 import org.esupportail.commons.exceptions.UserNotFoundException;
 import org.esupportail.commons.services.ldap.LdapException;
@@ -17,12 +21,14 @@ import org.esupportail.commons.services.ldap.LdapUser;
 import org.esupportail.commons.services.ldap.LdapUserAndGroupService;
 import org.esupportail.pushnotification.exceptions.LdapGroupNotFoundException;
 import org.esupportail.pushnotification.exceptions.LdapUserNotFoundException;
+import org.esupportail.pushnotification.form.NotificationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.ldap.filter.AndFilter;
-import org.springframework.ldap.filter.Filter;
-import org.springframework.ldap.filter.WhitespaceWildcardsFilter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.ldap.core.AttributesMapper;
+import org.springframework.ldap.core.LdapTemplate;
+import static org.springframework.ldap.query.LdapQueryBuilder.query;
 import org.springframework.ldap.support.LdapUtils;
 
 /**
@@ -31,51 +37,25 @@ import org.springframework.ldap.support.LdapUtils;
  */
 public class Ldap {
     
-    @Autowired
-    private LdapUserAndGroupService ldapService;
+    @Autowired private LdapUserAndGroupService ldapService;
+//    @Autowired private LdapGroupService ldapGroupService;
+    @Autowired private LdapGroupService ldapGroupMembersService;
+    @Autowired private LdapTemplate ldapTemplate;
+    @Value("${ldap.group.groupMemberAttr}")
+    private String groupMemberAttribute;
     private LdapUtils ldapUtils;
-    @Autowired
-    private LdapGroupService ldapGroupService;
-    @Autowired
-    private LdapGroupService ldapGroupMembersService;
     private String searchAttribute;
     private String userPagerAttribute;
-    
-    
     private static final Logger logger = LoggerFactory.getLogger(Ldap.class);
     
-    // return a List of LdapUser object from a list of string uid
-    public ArrayList<LdapUser> getLdapUsersFromLogins(String recipients) throws LdapUserNotFoundException {
-        
-        // List of ldapUser object
-        ArrayList<LdapUser> listOfLdapUser = new ArrayList<>();
-        
-        // list of user (string received by input)
-        ArrayList<String> listOfStringUser = recipientToArrayList(recipients);
-        
-        for(String userUid : listOfStringUser) {
-            try{
-                
-                LdapUser user = this.getLdapUserByUserUid(userUid);
-                
-                listOfLdapUser.add(user);
-                
-            } catch (LdapUserNotFoundException e) {
-                
-                logger.info("User  ["+ userUid + "] has not been found : ", e);
-            }
-        }
-        return listOfLdapUser;
-    }
-    
-    
-    // return a LdapUser from a uid
+    // ok
     public LdapUser getLdapUserByUserUid(final String ldapUserUid) throws LdapUserNotFoundException, LdapException {
-        
+        logger.info("entree dans getLdapUserByUserUid");
         LdapUser ldapUser = null;
         try {
             
             ldapUser = ldapService.getLdapUser(ldapUserUid);
+            logger.info(ldapUser.toString());
             
         } catch (UserNotFoundException e) {
             
@@ -84,97 +64,191 @@ public class Ldap {
         
         return ldapUser;
     }
-    
-    
-    // return a LdapUser from a token. This function is not completed
-    public List<LdapUser> getUserFromToken(String token) throws LdapUserNotFoundException{
+
+    // ok
+    public ArrayList<LdapUser> getLdapUsersFromUids(ArrayList<String> logins) throws LdapUserNotFoundException {
         
-        System.out.println("Le patern est : " + token);
+        // List of ldapUser object
+        ArrayList<LdapUser> listOfLdapUser = new ArrayList<LdapUser>();
         
-        List<LdapUser> users = this.getLdapUsersFromToken(token);
-        
-        System.out.println("Utilisateurs trouves : ");
-        
-        return users;
+        for(String userUid : logins) {
+            try{
+                
+                logger.info("Login du user a chercher : " + userUid);
+                
+                LdapUser user = this.getLdapUserByUserUid(userUid);
+                
+                logger.info("User trouve : " + user.toString());
+                
+                listOfLdapUser.add(user);
+                
+            } catch (LdapUserNotFoundException e) {
+                
+                logger.info("Le user ["+ userUid + "] n\'a pas ete trouve : ", e);
+            }
+        }
+        return listOfLdapUser;
     }
     
-    public List<LdapUser> getLdapUsersByGroupId(final String groupId) throws LdapGroupNotFoundException, LdapUserNotFoundException {
+    // not ok
+    public void getUsersByToken(NotificationForm notification) {
         
-        System.out.println("###############################################################");
-        System.out.println("Entree dans getLdapUsersByGroupId");
-        System.out.println("Le group a chercher est : " + groupId);
+        logger.info("Etree dans getUserByToken");
         
+        List<LdapUser> users = ldapService.getLdapUsersFromToken(notification.getRecipient());
         
-        List<LdapGroup> groups = null;
+        for(LdapUser user : users){
+            
+            logger.info("User correspondant au token : "+ user.getId());
+            
+        }
+    }
+    
+//    public void getLdapUserByGrouptoken(String groupToken) throws LdapGroupNotFoundException {
+//
+//        try{
+//            logger.info("###############################################################");
+//
+//            List<LdapGroup> groups = ldapGroupMembersService.getLdapGroupsFromToken(groupToken);
+//
+//            logger.info("Nombre de correspondances : " + groups.size());
+//
+//            for(LdapGroup group : groups){
+//
+//                logger.info("Groupe correspondant => " + group.getId());
+//            }
+//
+//            logger.info("###############################################################");
+//
+//        } catch (GroupNotFoundException e){
+//
+//            LdapGroupNotFoundException(e, groupToken);
+//        }
+//
+//    }
+    
+    public List<LdapUser> getLdapUsersByGroupId(final String groupId) throws LdapGroupNotFoundException, LdapUserNotFoundException, NullPointerException {
+        
+        logger.info("Entree dans getLdapUsersByGroupId");
+        logger.info("Le group a chercher est : " + groupId);
+        
+        List<LdapUser> ldapUserList = null;
         
         try{
+            logger.info("Entree dans try");
             
-            groups = ldapGroupService.getLdapGroupsFromToken(groupId);
-        
+            LdapGroup ldapGroup = ldapGroupMembersService.getLdapGroup(groupId);
+            
+            logger.info("ldapGroup => " + ldapGroup.toString());
+            
+            List<LdapUser> users = this.getMembers(ldapGroup);
+            
+            logger.info(users.toString());
+            
+//            logger.info("Groupe trouve : " + ldapGroup.toString());
+//
+//            List<String> membres = this.getMemberIds(ldapGroup.getId());
+//
+//            logger.info("Liste des membres du groupe :");
+//            for(String login : membres){
+//                logger.info("Login : " + login);
+//            }
+//
+//            ldapUserList = this.getMembers(ldapGroup);
+//
+//            logger.info("Nombre de membres trouve : " + ldapUserList.size());
+//
+//            logger.info("Listing des membres du groupe : ");
+//
+//            for(LdapUser ldapUser : ldapUserList){
+//
+//                logger.info("Login : " + ldapUser.getId() + " \n mail : " + ldapUser.getAttribute("mail"));
+//            }
+//
+////            for (String user : membres){
+////                logger.info("User : " + user);
+////            }
+//
+            
         } catch (GroupNotFoundException e){
             
             LdapGroupNotFoundException(e, groupId);
         }
         
-        System.out.println("Nombre de groupes correspondants : " + groups.size());
-        
-        for(LdapGroup group : groups){
-            
-            System.out.println("Groupe correspondant => " + group.getId());
-        }
-        System.out.println("###############################################################");
-        
-           
-        
-        
-        
-        
-        
-        System.out.println("***************************************************************");
-        
-        LdapGroup ldapGroup = ldapGroupService.getLdapGroup(groups.get(0).getId());
-        
-        System.out.println("Group [ " + ldapGroup.getId() + " ] trouve. \n Recuperation des membres du groupe...");
-        
-        List<LdapUser> ldapUserList = ldapService.getMembers(ldapGroup);
-
-        System.out.println(" Nombre de membres trouve : " + ldapUserList.size());
-
-        
-        System.out.println("Liste des membres du groupe : " + ldapUserList.toString());
-        
-        System.out.println("Listing des membres du groupe : ");
-        
-        for(LdapUser ldapUser : ldapUserList){
-            System.out.println("login : " + ldapUser.getId());
-        }
-        
-        System.out.println("***************************************************************");
-        
         return ldapUserList;
     }
     
-    public List<LdapGroup> searchGroupsByName(final String token) {
-        System.out.println("Entree dans searchGroupsByName");
+    // not ok
+//    public List<LdapGroup> searchGroupsByName(final String token) {
+//        logger.info("Entree dans searchGroupsByName");
+//
+//        List<LdapGroup> groups = ldapGroupMembersService.getLdapGroupsFromToken(token);
+//
+//        for (LdapGroup group : groups) {
+//            logger.info("Nom du groupe : " + group.getId());
+//            List<String> membres = this.getMemberIds(group.getId());
+//            logger.info("Liste des membres du groupe :");
+//            for(String login : membres){
+//                logger.info("Login : " + login);
+//            }
+//        }
+//
+//        return ldapGroupMembersService.getLdapGroupsFromToken(token);
+//    }
+    
+    // ok
+//    public List<String> getMembersId(LdapGroup groupId) {
+//        return ldapService.getMemberIds(ldapGroupMembersService.getLdapGroup(groupId));
+//    }
+    
+    
+    
+    
+    // ok
+    public List<LdapUser> getMembers(LdapGroup group) throws LdapUserNotFoundException {
         
-        List<LdapGroup> groups = ldapGroupService.getLdapGroupsFromToken(token);
+        logger.info("Entree dans getMembers");
         
-        for (LdapGroup group : groups) {
-            System.out.println("nom du groupe : " + group.getId());
-            List<String> membres = this.getMemberIds(group.getId());
-            System.out.println("Liste des membres du groupe :");
-            for(String login : membres){
-                System.out.println("login => " + login);
+        List<LdapUser> users = new ArrayList<LdapUser>();
+        
+        List<String> usersId = group.getAttributes(groupMemberAttribute);
+        
+        logger.info("Liste des usersId :");
+        ArrayList<String> uids = new ArrayList<String>();
+        
+        for(String userId : usersId) {
+            
+            logger.info("Un user : " + userId);
+            
+            Pattern p = Pattern.compile("uid=(.+?),");
+            Matcher m = p.matcher(userId);
+            
+            while(m.find()) {
+                
+                String uid = m.group(1);
+                uids.add(uid);
+                
+//                try {
+//                    logger.info("Entree dans le try : ");
+//                    logger.info("uid a chercher est : " + uid);
+//                    LdapUser u = this.getLdapUserByUserUid(uid);
+//                    logger.info("Recuperation du ldapUser : " + u.toString());
+//                    users.add(u);
+//                
+//                } catch (Exception e) {}
             }
         }
-        
-        return ldapGroupService.getLdapGroupsFromToken(token);
+        users = this.getLdapUsersFromUids(uids);
+        logger.info(users.toString());
+        return users;
     }
     
-    public List<String> getMemberIds(String groupId) {
-        return ldapService.getMemberIds(ldapGroupMembersService.getLdapGroup(groupId));
+    // ok
+    public void setLdapTemplate(LdapTemplate ldapTemplate) {
+        this.ldapTemplate = ldapTemplate;
     }
     
+    // ok
     public List<String> getLoginsFromLdapUsers(List<LdapUser> ldapUsers){
         
         List<String> logins = null;
@@ -186,6 +260,38 @@ public class Ldap {
         return logins;
     }
     
+    // ok
+    public void setUserSearchAttribute(final String searchAttribute) {
+        
+        this.searchAttribute = searchAttribute;
+    }
+    
+    // ok
+    public void setLdapService(final LdapUserAndGroupService ldapGroupService) {
+        
+        this.ldapService = ldapGroupService;
+    }
+    
+    // ok
+    public ArrayList<String> recipientToArrayList(String recipients) {
+        
+        ArrayList<String> recipientsList = new ArrayList<String>();
+        
+        String [] parts = recipients.split(",");
+        
+        for(String recipient : parts){
+            recipientsList.add(recipient);
+        }
+        
+        return recipientsList;
+    }
+    
+    // ok
+    private void LdapGroupNotFoundException() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    // ok
     private void throwLdapUserNotFoundException(UserNotFoundException e, final String ldapUserUid) throws LdapUserNotFoundException {
         
         final String messageStr = "Impossible de trouver l'utilisateur ayant pour login : [" + ldapUserUid + "]";
@@ -193,6 +299,7 @@ public class Ldap {
         throw new LdapUserNotFoundException(messageStr, e);
     }
     
+    // ok
     private void LdapGroupNotFoundException(GroupNotFoundException e, String groupId) throws LdapGroupNotFoundException {
         
         final String messageStr = "Impossible de trouver le ayant pour id : [" + groupId + "]";
@@ -200,52 +307,4 @@ public class Ldap {
         throw new LdapGroupNotFoundException(messageStr, e);
         
     }
-    
-    public List<LdapUser> getLdapUsersFromToken(final String token) {
-        System.out.println("Entree dans getLdapUsersFromToken");
-        System.out.println("Le toekn est : " + token);
-        final AndFilter filter = new AndFilter();
-        andTokenFilter(filter, token);
-        return searchWithFilter(filter);
-    }
-    
-    private void andTokenFilter(final AndFilter filter, final String token) {
-        
-        for (String tok : token.split("\\p{Blank}")) {
-            if (tok.length() > 0)
-                filter.and(new WhitespaceWildcardsFilter(searchAttribute, tok));
-        }
-    }
-    
-    public List<LdapUser> searchWithFilter(final Filter filter) {
-        
-        final String filterAsStr = filter.encode();
-        if (logger.isDebugEnabled()) {
-            logger.debug("LDAP filter applied : " + filterAsStr);
-        }
-        return ldapService.getLdapUsersFromFilter(filterAsStr);
-    }
-    
-    public void setUserSearchAttribute(final String searchAttribute) {
-        
-        this.searchAttribute = searchAttribute;
-    }
-    
-    public void setLdapService(final LdapUserAndGroupService ldapGroupService) {
-        
-        this.ldapService = ldapGroupService;
-    }
-    
-    public ArrayList<String> recipientToArrayList(String recipients) {
-        
-        ArrayList<String> recipientsList = new ArrayList();
-        String [] parts = recipients.split(",");
-        for (int i = 0; i< parts.length; i++) {
-            System.out.println("un recipient : " + parts[i]);
-            recipientsList.add(parts[i]);
-        }
-        return recipientsList;
-    }
-    
-    
 }

@@ -13,6 +13,7 @@ import javax.mail.MessagingException;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.RenderRequest;
+import org.esupportail.commons.exceptions.GroupNotFoundException;
 import org.esupportail.commons.services.ldap.LdapUser;
 import org.esupportail.commons.services.ldap.LdapUserAndGroupService;
 import org.esupportail.pushnotification.exceptions.LdapGroupNotFoundException;
@@ -46,23 +47,17 @@ import org.springframework.web.portlet.bind.annotation.RenderMapping;
 public class NotificationController {
     
     private static final Logger logger = LoggerFactory.getLogger(ViewController.class);
-    
-    private JavaSender defaultJavaSender;
-    @Autowired
-    private Ldap ldap;
-    @Autowired
-    private Mail mail;
-    @Autowired
-    private LdapUserAndGroupService ldapService;
-//    private LdapUtils ldapUtils;
-    
-    
-    private String mailAttribute = "mail";
-    
+    @Autowired private Ldap ldap;
+    @Autowired private Mail mail;
+    @Autowired private LdapUserAndGroupService ldapService;
     @Value("${push.rootServerURL}") private String url;
     @Value("${push.applicationId}") private String applicationId;
     @Value("${push.masterSecret}") private String masterSecret;
     @Value("{smtp.user}") private String sender;
+    private JavaSender defaultJavaSender;
+    private String mailAttribute = "mail";
+    
+    
     
     @PostConstruct
     public void initConnection() throws MessagingException {
@@ -82,16 +77,9 @@ public class NotificationController {
     @ActionMapping("notificationSubmit")
     public void onNotificationFormSubmit(ActionRequest req, ActionResponse res, @ModelAttribute("notificationForm") NotificationForm notification, BindingResult results) throws LdapUserNotFoundException, LdapGroupNotFoundException, MessagingException {
         
-        logger.info("The recipient type is : " + notification.getRecipientType());
-        logger.info("The message : " + notification.getMessage());
-        logger.info("The recipient : " + notification.getRecipient());
-        logger.info("Mail : " + notification.getMail());
-        
-        
-        
         switch(notification.getRecipientType()) {
-            case "token" : 
-                this.getUserByToken(notification);
+            case "token" :
+                ldap.getUsersByToken(notification);
             case "logins" :
                 this.sendNotificationToLogins(notification);
                 break;
@@ -108,30 +96,45 @@ public class NotificationController {
     }
     
     public void sendNotificationToLogins(NotificationForm notification) throws LdapUserNotFoundException {
-
-        // this.getLdapUsersFromLogins(notification.getRecipient());
-        this.sendNotification(notification, this.recipientToArrayList(notification.getRecipient()));
         
-        this.sendMailQuestion(notification);
+        ArrayList<String> logins = this.recipientToArrayList(notification.getRecipient());
+        
+        List<LdapUser> ldapUsers = ldap.getLdapUsersFromUids(logins);
+        
+        this.sendNotification(notification, logins);
+        
+        this.addMail(notification, ldapUsers);
     }
     
     public void sendNotificationToGroups(NotificationForm notification) throws LdapGroupNotFoundException, LdapUserNotFoundException {
         
-        List<LdapUser> ldapUsers = ldap.getLdapUsersByGroupId(notification.getRecipient());
-//        ldap.searchGroupsByName(notification.getRecipient());
+        String groupId = notification.getRecipient();
         
-        // recuperer le login de chaque utilisateur
-        List<String> logins = ldap.getLoginsFromLdapUsers(ldapUsers);
+        List<LdapUser> ldapUsers = null;
         
-        for(String login : logins){
-            System.out.print(login);
-        }
-        // appeler send notification to logins
-        this.sendNotification(notification, logins);
+        try{
+            
+            ldapUsers = ldap.getLdapUsersByGroupId(groupId);
+        
+        } catch (GroupNotFoundException e){
+            
+            LdapGroupNotFoundException(e, groupId);
+        
+        }     
+//        List<String> logins = null;
+//        
+//        for(LdapUser user : ldapUsers){
+//            
+//            logger.info("user id : " + user.getId() + " user email : " + user.getAttribute("email"));
+//            logins.add(user.getId());
+//            
+//        }
+        
+//        this.sendNotification(notification, logins);
+        
+        this.addMail(notification, ldapUsers);
         
     }
-    
-    
     
     public void sendNotification(NotificationForm notification, List<String> logins){
         
@@ -140,7 +143,7 @@ public class NotificationController {
         UnifiedMessage unifiedMessage = new UnifiedMessage.Builder()
                 .pushApplicationId(this.applicationId)
                 .masterSecret(this.masterSecret)
-                .alert("Hello from Java Sender API!")
+                .alert(notification.getMessage())
                 .build();
         
         defaultJavaSender.send(unifiedMessage, new MessageResponseCallback() {
@@ -160,55 +163,41 @@ public class NotificationController {
         
     }
     
-    public void sendCourriel(NotificationForm notification) throws LdapUserNotFoundException{
+    public void addMail(NotificationForm notification, List<LdapUser> users ) throws LdapUserNotFoundException {
         
-        List<LdapUser> ldapUsers = ldap.getLdapUsersFromLogins(notification.getRecipient());
-        
-        System.out.print("Le groupe : " + notification.getRecipient() + " contient " + ldapUsers.size() + " membres \n");
-        for(LdapUser ldapUser : ldapUsers){
+        if(notification.getMail().equalsIgnoreCase("true")) {
+            
+            System.out.print("Joindre la notification d'un courriel \n");
+            this.sendCourriel(notification, users);
+            
+        }
+    }
+    
+    public void sendCourriel(NotificationForm notification, List<LdapUser> users) throws LdapUserNotFoundException{
+       
+        for(LdapUser ldapUser : users){
             
             String msg = notification.getMessage();
             String object = notification.getObject();
             
-            //mail.sendMail(this.sender, ldapUser.getAttribute(this.mailAttribute),object, msg);
+            //mail.sendMail(this.sender, ldapUser.getAttribute(this.mailAttribute), object, msg);
         }
     }
-    
     
     public ArrayList<String> recipientToArrayList(String recipients) {
         
-        ArrayList<String> recipientsList = new ArrayList();
+        ArrayList<String> recipientsList = new ArrayList<String>();
         
         String [] parts = recipients.split(",");
         
-        for (int i = 0; i< parts.length; i++) {
-        
-            recipientsList.add(parts[i]);
-        
+        for(String recipient : parts){
+            recipientsList.add(recipient);
         }
         
         return recipientsList;
-    }
-    
-    private void getUserByToken(NotificationForm notification) {
-        
-        System.out.print("Etree dans getUserByToken \n");
-        
-        List<LdapUser> users = ldapService.getLdapUsersFromToken(notification.getRecipient());
-        
-        for(LdapUser user : users){
-        
-            System.out.print("le nom du user est : "+ user.getId() + "\n");
-        
-        }
-    }
-    
-    
-    
-    public void sendMailQuestion(NotificationForm notification ) throws LdapUserNotFoundException {
-        if(notification.getMail().equalsIgnoreCase("true")) {
-            System.out.print("Joindre la notification d'un courriel \n");
-            this.sendCourriel(notification);
-        }
+    }   
+
+    private void LdapGroupNotFoundException(GroupNotFoundException e, String groupId) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

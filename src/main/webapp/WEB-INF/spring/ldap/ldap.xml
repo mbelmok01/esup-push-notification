@@ -5,30 +5,18 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd "
 >
-
-    <!-- 
-            /properties/ldap/ldap.xml
-            The configuration file for domain services.
-            This file is referenced by /properties/applicationContext.xml.
-    -->
-
-    <bean id="ldapService"
-              class="org.esupportail.commons.services.ldap.SearchableLdapUserAndGroupServiceImpl"
-              lazy-init="true">
+    
+    <bean id="ldapService" class="org.esupportail.commons.services.ldap.SearchableLdapUserAndGroupServiceImpl" lazy-init="true">
         <property name="userService" ref="ldapUserService" />
         <property name="groupService" ref="ldapGroupService" />
         <property name="groupMemberAttribute" value="${ldap.group.groupMemberAttr}"/>
     </bean>
 	
-    <bean id="ldapUserService"
-              class="org.esupportail.commons.services.ldap.SearchableLdapUserServiceImpl"
-              lazy-init="true">
-        <property name="i18nService" ref="i18nService">
-        </property>
+    <bean id="ldapUserService" class="org.esupportail.commons.services.ldap.SearchableLdapUserServiceImpl" lazy-init="true">
+        <property name="i18nService" ref="i18nService"> </property>
         <property name="ldapTemplate" ref="ldapTemplate" />
         <property name="dnSubPath" value="${ldap.dnSubPath}" />
-        <property name="idAttribute" value="${ldap.uidAttribute}">
-        </property>
+        <property name="idAttribute" value="${ldap.uidAttribute}"> </property>
         <property name="attributes">
             <list>
                 <value>${ldap.displayNameAttribute}</value>
@@ -44,17 +32,23 @@
             <list>
                 <value>cn</value>
             </list> 
-        </property> <!-- unused -->
+        </property>
         <property name="cacheManager" ref="cacheManager" />
         <property name="objectClass" value="${ldap.objectClass}"/>
         <property name="testFilter" value="${ldap.testFilter}" >
         </property>
     </bean>
-	
-    <bean id="ldapGroupServiceProperties"
-              abstract="true">
-        <property name="i18nService" ref="i18nService">
+
+    <bean id="ldapGroupService" class="org.esupportail.commons.services.ldap.SearchableLdapGroupServiceImpl" parent="ldapGroupServiceProperties" lazy-init="true">
+        <property name="attributes">
+            <list>
+                <value>${ldap.group.nameAttr}</value>
+            </list>
         </property>
+    </bean>
+
+    <bean id="ldapGroupServiceProperties" abstract="true">
+        <property name="i18nService" ref="i18nService"></property>
         <property name="ldapTemplate" ref="ldapTemplate" />
         <property name="dnSubPath" value="${ldap.group.dnSubPath}"/>
         <property name="idAttribute" value="${ldap.group.idAttribute}"/>
@@ -63,55 +57,23 @@
             <list>
                 <value>cn</value>
             </list> 
-        </property> <!-- unused -->
+        </property>
         <property name="objectClass" value="${ldap.group.groupObjectClass}"/>
         <property name="testFilter" value="${ldap.group.testFilter}"/>
     </bean>
-	
-    <bean id="ldapGroupService"
-          class="org.esupportail.commons.services.ldap.SearchableLdapGroupServiceImpl"
-          parent="ldapGroupServiceProperties"
-          lazy-init="true">
-        <property name="attributes">
-            <list>
-                <value>${ldap.group.nameAttr}</value>
-            </list>
-        </property>
-    </bean>
-
-    <!-- another LdapGroup service especially to return group members.
-        having them in ldapGroupService would impact very badly performance when searching a group!		
-    -->
-    <bean id="ldapGroupMembersService"
-              class="org.esupportail.commons.services.ldap.SearchableLdapGroupServiceImpl"
-              parent="ldapGroupServiceProperties"
-              lazy-init="true">
+    
+    <bean id="ldapGroupMembersService" class="org.esupportail.commons.services.ldap.SearchableLdapGroupServiceImpl" parent="ldapGroupServiceProperties" lazy-init="true">
         <property name="attributes">
             <list>
                 <value>${ldap.group.groupMemberAttr}</value>
             </list>
         </property>
     </bean>
-
-    <bean 
-        id="ldapTemplate" 
-        class="org.springframework.ldap.core.LdapTemplate"
-        lazy-init="true"
-    >
-        <property name="contextSource" ref="contextSource">
-        </property>
-    </bean>
-
-    <bean id="contextSource"
-          class="org.springframework.ldap.core.support.LdapContextSource"
-          lazy-init="true"
-    >
+    
+    <bean id="contextSource" class="org.springframework.ldap.core.support.LdapContextSource" lazy-init="true" >
         <property name="url" value="${ldap.url}"/>
-        <property name="userDn" value="${ldap.userName}">
-            
-        </property>
-        <property name="password" value="${ldap.password}">
-        </property>
+        <property name="userDn" value="${ldap.userName}"></property>
+        <property name="password" value="${ldap.password}"></property>
         <property name="base" value="${ldap.base}"/>
         <property name="baseEnvironmentProperties">
             <map>
@@ -121,5 +83,7 @@
         </property>
     </bean>
 
-   
+    <bean id="ldapTemplate" class="org.springframework.ldap.core.LdapTemplate" lazy-init="true" >
+        <property name="contextSource" ref="contextSource"></property>
+    </bean>
 </beans>
